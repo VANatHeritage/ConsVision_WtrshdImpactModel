@@ -658,13 +658,12 @@ def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_
    print("Scratch products are being written to %s"%scratchGDB)
 
    # Select the catchments intersecting in_BoundPoly, and save them to a temp feature class
-   print
    tmpCatch = scratchGDB + os.sep + "tmpCatch"
    print("Selecting catchments within area of interest...")
    arcpy.MakeFeatureLayer_management(in_Catchments, "catch_lyr")
    arcpy.SelectLayerByLocation_management("catch_lyr", "intersect", in_BoundPoly)
    print("Copying subset...")
-   arcpy.CopyFeatures_management("catch_lyr", tmpCatch)
+   arcpy.management.CopyFeatures("catch_lyr", tmpCatch)
    
    # Attach the headwaters indicator field to the catchment subset, then rasterize
    fldID = "NHDPlusID"
