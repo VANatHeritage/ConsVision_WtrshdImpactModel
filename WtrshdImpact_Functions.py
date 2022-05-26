@@ -2,7 +2,7 @@
 # WtrshdImpact_Functions.py
 # Version: ArcPro / Python 3+
 # Creation Date: 2020-07-06
-# Last Edit: 2022-05-24
+# Last Edit: 2022-05-25
 # Creator: Kirsten R. Hazler
 #
 # Summary: Functions to produce the ConservationVision Watershed Impact Model.
@@ -645,6 +645,8 @@ def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_
    - in_BoundPoly: Input polygon feature class delimiting the area of interest
    - in_Mask: Input raster used to define the processing area, cell size, and alignment
    - out_Hdwtrs: Output raster representing headwater status
+   
+   NOTE: Original version of this function was flawed because some catchments have no flowlines, and thus do not get a headwaters attribute. Updated to replace nulls with zeros.
    '''
    
    # Set environment variables
@@ -653,6 +655,7 @@ def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_
    arcpy.env.mask = in_Mask
    
    scratchGDB = arcpy.env.scratchGDB
+   print("Scratch products are being written to %s"%scratchGDB)
 
    # Select the catchments intersecting in_BoundPoly, and save them to a temp feature class
    print
@@ -668,8 +671,16 @@ def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_
    fldHead = "StartFlag"
    print("Joining headwaters indicator field to catchments...")
    arcpy.JoinField_management(tmpCatch, fldID, in_FlowLines, fldID, fldHead)
+   print("Replacing nulls with zeros...")
+   codeblock = '''def fillNulls(fld):
+      if fld == None:
+         f = 0
+      else:
+         f = fld
+      return f
+   '''
    print("Rasterizing...")
-   PolyToRaster(tmpCatch, fldHead, in_Mask, out_Hdwtrs) 
+   PolyToRaster(tmpCatch, fldHead, in_Mask, out_Hdwtrs)   
    
    print("Mission complete.")
    
@@ -864,6 +875,30 @@ def calcImpactScore(in_PositionScore, in_SoilSensScore, out_ImpactScore):
    print("Mission accomplished.")
    return out_ImpactScore
    
+def finalize_gdbRas2Tif(gdbRaster, mask, outPath):
+   '''Converts gdb raster to integerized tif format, limited to mask area, and builds pyramids
+   
+   Parameters:
+   - gdbRaster - input raster in GDB format
+   - mask - mask raster determining footprint of output
+   - outPath - the path to the folder where TIF raster should be saved
+   '''
+   arcpy.env.mask = mask
+   name = os.path.basename(ras)
+   print("Working on %s..."%name)
+   arcpy.CreateFolder_management(outPath, name)
+   outTif = outPath + os.sep + name + os.sep + "%s.tif"%name
+   r = Raster(gdbRaster)
+   print("Integerizing...")
+   intRas = Int(0.5+r)
+   print("Saving...")
+   intRas.save(outTif)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(outTif)
+   print("Done.")
+
+
+
 def calcImportanceScore(in_raList, in_Snap, out_Raster):
    '''Calculates an Importance Score, based on polygon features identifying areas impacting resources of interest (e.g., catchments for Healthy Waters sites, assessment zones for drinking water intakes, or a Stream Conservation Site delineation).
    
