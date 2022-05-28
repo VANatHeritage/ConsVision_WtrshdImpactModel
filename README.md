@@ -6,8 +6,8 @@ For more information, see [here](https://www.dcr.virginia.gov/natural-heritage/v
 ---
 ## Script overview
 
-HelperPro.py - Contains general-purpose functions, used across multiple projects
+**HelperPro.py** - Contains general-purpose functions, used across multiple projects
 
-WtrshdImpact_Functions.py - Contains functions specific to this model
+**WtrshdImpact_Functions.py** - Contains functions specific to this model
 
-WtrshdImpact_Workflow.py - Contains data path specifications and series of function calls in the order needed to produce the model. Intended to be edited by the user with specific data paths as needed.
+**WtrshdImpact_Workflow.py** - Contains data path specifications and series of function calls in the order needed to produce the model. Intended to be edited by the user with specific data paths as needed.
