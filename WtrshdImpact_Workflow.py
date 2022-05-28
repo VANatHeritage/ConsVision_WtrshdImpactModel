@@ -5,7 +5,9 @@
 # Last Edit: 2022-05-27
 # Creator: Kirsten R. Hazler
 #
-# Summary: Workflow to produce the ConservationVision Watershed Impact Model. This is intended as a guide for how to reproduce the model. Do NOT attempt to run this all at once. You would need to download the latest data, perform some manual operations, and replace hard-coded data paths with your own. It's recommended to comment out sections as needed, and just run small sections at a time. 
+# Summary: Workflow to produce the ConservationVision Watershed Impact Model 
+
+# Usage notes: This is intended as a guide for how to reproduce the model, and you may or may not want to run all code at once. Prior to running, you need to download the latest data, perform some manual operations, and replace hard-coded data paths with your own. It's recommended to comment out sections as needed, and just run small sections at a time. 
 
 # For background and references see:
 # - Coastal Services Center. 2014. “Technical Guide for OpenNSPECT, Version 1.2.” National Oceanic and Atmospheric Administration (NOAA). https://coast.noaa.gov/digitalcoast/tools/opennspect
