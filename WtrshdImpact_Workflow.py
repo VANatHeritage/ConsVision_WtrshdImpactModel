@@ -2,7 +2,7 @@
 # WtrshdImpact_Workflow.py
 # Version: ArcPro / Python 3+
 # Creation Date: 2020-07-06
-# Last Edit: 2022-05-26
+# Last Edit: 2022-05-27
 # Creator: Kirsten R. Hazler
 #
 # Summary: Workflow to produce the ConservationVision Watershed Impact Model. This is intended as a guide for how to reproduce the model. Do NOT attempt to run this all at once. You would need to download the latest data, perform some manual operations, and replace hard-coded data paths with your own. It's recommended to comment out sections as needed, and just run small sections at a time. 
@@ -71,111 +71,119 @@ def main():
    ### End Input Data ###
 
 
-   # ### Soil Loss Potential procedures ###
-   # print("Starting procedures for soil loss potential...")
+   ### Soil Loss Potential procedures ###
+   print("Starting procedures for soil loss potential...")
    
-   # ## Prepare the R-factor raster
-   # # Requires coarse-scale R-factor raster (in_Rfactor) from NOAA
-   # print("Downscaling R-factor raster...")
-   # Rfactor = procGDB + os.sep + "rusleR" # downscaled raster
-   # Downscale_ras(in_Rfactor, in_Elev, Rfactor, "BILINEAR", clpShp)
-   # arcpy.management.BuildPyramids(Rfactor)
-   # print("Downscaled R-factor raster complete.")
+   ## Prepare the R-factor raster
+   # Requires coarse-scale R-factor raster (in_Rfactor) from NOAA
+   print("Downscaling R-factor raster...")
+   Rfactor = procGDB + os.sep + "rusleR" # downscaled raster
+   Downscale_ras(in_Rfactor, in_Elev, Rfactor, "BILINEAR", clpShp)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(Rfactor)
+   print("Downscaled R-factor raster complete.")
    
-   # ## Prepare the K-factor raster
-   # # Requires pre-processed SSURGO geodatabase(s) listed in gdbList
-   # for gdb in gdbList:
-      # print("Processing K-factor for %s..."%gdb)
-      # Kfactor_vec(gdb)
-   # print("K-factors complete.")
-   # Kfactor = procGDB + os.sep + "rusleK"
-   # print("Rasterizing K-factors...")
-   # SSURGOtoRaster(gdbList, "kFactor", in_Elev, Kfactor)
-   # arcpy.management.BuildPyramids(Kfactor)
-   # print("K-factor raster complete.")
+   ## Prepare the K-factor raster
+   # Requires pre-processed SSURGO geodatabase(s) listed in gdbList
+   for gdb in gdbList:
+      print("Processing K-factor for %s..."%gdb)
+      Kfactor_vec(gdb)
+   print("K-factors complete.")
+   Kfactor = procGDB + os.sep + "rusleK"
+   print("Rasterizing K-factors...")
+   SSURGOtoRaster(gdbList, "kFactor", in_Elev, Kfactor)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(Kfactor)
+   print("K-factor raster complete.")
    
-   # ## Prepare the S-factor raster
-   # # Requires an elevation raster (in_Elev)
-   # # In this case we used a DEM with elevation in cm, hence the zfactor below.
-   # Sfactor = procGDB + os.sep + "rusleS"
-   # slope_perc = procGDB + os.sep + "slope_perc"
-   # print("Transforming slope to S-factor...")
-   # SlopeTrans(in_Elev, "ELEV", "RUSLE", Sfactor, slope_perc, zfactor = 0.01)
-   # arcpy.management.BuildPyramids(Sfactor)
-   # print("S-factor raster complete.")
+   ## Prepare the S-factor raster
+   # Requires an elevation raster (in_Elev). In this case we used a DEM with elevation in cm, hence the zfactor below.
+   Sfactor = procGDB + os.sep + "rusleS"
+   slope_perc = procGDB + os.sep + "slope_perc"
+   print("Transforming slope to S-factor...")
+   SlopeTrans(in_Elev, "ELEV", "RUSLE", Sfactor, slope_perc, zfactor = 0.01)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(Sfactor)
+   print("S-factor raster complete.")
    
-   # ## No need for C-factor raster; we are assuming worst-case scenario, bare soil, so use a constant value (from OpenNSPECT)
-   # Cfactor = 0.7
+   ## No need for C-factor raster; we are assuming worst-case scenario, bare soil, so use a constant value (from OpenNSPECT)
+   Cfactor = 0.7
    
-   # ## Prepare the soil loss raster based on RUSLE factors created above, assuming bare soil
-   # soilLoss_bare = procGDB + os.sep + "rusleRKSC_bare"
-   # print("Generating barren land soil loss raster...")
-   # soilLoss_RKSC(Rfactor, Kfactor, Sfactor, Cfactor, soilLoss_bare)
-   # arcpy.management.BuildPyramids(soilLoss_bare)
-   # print("Barren land soil loss raster complete.")
-   
-   
-   # ### Runoff Potential procedures ###
-   # print("Starting procedures for runoff potential...")
-   
-   # ## Prepare the rainfall raster: Probable Maximum Precipitation (PMP)
-   # # Requires rainfall points generated from Dam Safety's PMP tool (pmpPts, with attributes in pmpFld)
-   # # Note: Interpolated to coarse scale first b/c memory was failing otherwise.
-   # maxPrecip250 = procGDB + os.sep + "maxPrecip_gen24_topo250"
-   # maxPrecip10 = procGDB + os.sep + "maxPrecip_gen24_topo10"
-   # print("Interpolating rainfall points...")
-   # interpPoints(pmpPts, pmpFld, in_Elev, maxPrecip250, clpShp, "TOPO", "", "", 250) # interpolate 
-   # print("Downscaling interpolated rainfall raster...")
-   # Downscale_ras(maxPrecip250, in_Elev, maxPrecip10, "BILINEAR", clpShp) # downscale
-   # arcpy.management.BuildPyramids(maxPrecip10)
-   # print("Rainfall raster complete.")
+   ## Prepare the soil loss raster based on RUSLE factors created above, assuming bare soil
+   soilLoss_bare = procGDB + os.sep + "rusleRKSC_bare"
+   print("Generating barren land soil loss raster...")
+   soilLoss_RKSC(Rfactor, Kfactor, Sfactor, Cfactor, soilLoss_bare)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(soilLoss_bare)
+   print("Barren land soil loss raster complete.")
    
    
-   # ## Prepare the hydro group raster
-   # # Requires pre-processed SSURGO geodatabase(s) listed in gdbList
-   # for gdb in gdbList:
-      # print("Processing hydro group for %s..."%gdb")
-      # HydroGrp_vec(gdb)
-   # print("Hydro groups complete.")
-   # hydroGrp = procGDB + os.sep + "HydroGroup"
-   # print("Rasterizing hydro groups...")
-   # SSURGOtoRaster(gdbList, "HydroGrpNum", in_Elev, hydroGrp)
-   # arcpy.management.BuildPyramids(hydroGrp)
-   # print("Hydro group raster complete.")
+   ### Runoff Potential procedures ###
+   print("Starting procedures for runoff potential...")
    
-   # ## Prepare the curve number raster
-   # # Curve number based on soil hydro group only, assuming bare soil (NLCD code 31)
-   # curvNum_bare = procGDB + os.sep + "curvNum_bare"
-   # print("Creating barren land curve number raster...")
-   # curvNum(31, hydroGrp, curvNum_bare) 
-   # arcpy.management.BuildPyramids(curvNum_bare)
-   # print("Barren land curve number raster complete.")
+   ## Prepare the rainfall raster: Probable Maximum Precipitation (PMP)
+   # Requires rainfall points generated from Dam Safety's PMP tool (pmpPts, with attributes in pmpFld)
+   # Note: Interpolated to coarse scale first b/c memory was failing otherwise.
+   maxPrecip250 = procGDB + os.sep + "maxPrecip_gen24_topo250"
+   maxPrecip10 = procGDB + os.sep + "maxPrecip_gen24_topo10"
+   print("Interpolating rainfall points...")
+   interpPoints(pmpPts, pmpFld, in_Elev, maxPrecip250, clpShp, "TOPO", "", "", 250) # interpolate 
+   print("Downscaling interpolated rainfall raster...")
+   Downscale_ras(maxPrecip250, in_Elev, maxPrecip10, "BILINEAR", clpShp) # downscale
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(maxPrecip10)
+   print("Rainfall raster complete.")
    
-   # ## Prepare the runoff raster based on SCS curve-number method, assuming bare soil
-   # print("Creating barren land runoff raster...")
-   # eventRunoff(curvNum_bare, maxPrecip10, procGDB, "bare")
-   # # --> Relevant output is runoffDepth_bare
-   # runoffDepth_bare = procGDB + os.sep + "runoffDepth_bare"
-   # arcpy.management.BuildPyramids(runoffDepth_bare)
-   # print("Barren land runoff raster complete.")
+   
+   ## Prepare the hydro group raster
+   # Requires pre-processed SSURGO geodatabase(s) listed in gdbList
+   for gdb in gdbList:
+      print("Processing hydro group for %s..."%gdb")
+      HydroGrp_vec(gdb)
+   print("Hydro groups complete.")
+   hydroGrp = procGDB + os.sep + "HydroGroup"
+   print("Rasterizing hydro groups...")
+   SSURGOtoRaster(gdbList, "HydroGrpNum", in_Elev, hydroGrp)
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(hydroGrp)
+   print("Hydro group raster complete.")
+   
+   ## Prepare the curve number raster
+   # Curve number based on soil hydro group only, assuming bare soil (NLCD code 31)
+   curvNum_bare = procGDB + os.sep + "curvNum_bare"
+   print("Creating barren land curve number raster...")
+   curvNum(31, hydroGrp, curvNum_bare) 
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(curvNum_bare)
+   print("Barren land curve number raster complete.")
+   
+   ## Prepare the runoff raster based on SCS curve-number method, assuming bare soil
+   print("Creating barren land runoff raster...")
+   eventRunoff(curvNum_bare, maxPrecip10, procGDB, "bare")
+   # --> Relevant output is runoffDepth_bare
+   runoffDepth_bare = procGDB + os.sep + "runoffDepth_bare"
+   print("Building pyramids...")
+   arcpy.management.BuildPyramids(runoffDepth_bare)
+   print("Barren land runoff raster complete.")
 
    
-   # ### Calculate Soil Loss Potential, Runoff Potential, and Soil Sensitivity Scores ###
-   # print("Creating score rasters for soil loss, runoff, and soil sensitivity...")
-   # calcSoilSensScore(soilLoss_bare, runoffDepth_bare, procGDB, MaskNoWater)
-   # # --> Function outputs in procGDB are soilLoss_Score, runoff_Score, and soilSens_Score
-   # soilLossScore = procGDB + os.sep + "soilLoss_Score_bare"
-   # runoffScore = procGDB + os.sep + "runoff_Score_bare"
-   # SoilSensScore = procGDB + os.sep + "soilSens_Score_bare"
-   # for ras in [soilLossScore, runoffScore, SoilSensScore]:
-      # arcpy.management.BuildPyramids(ras)
-   # print("Soil score rasters complete.")
+   ### Calculate Soil Loss Potential, Runoff Potential, and Soil Sensitivity Scores ###
+   print("Creating score rasters for soil loss, runoff, and soil sensitivity...")
+   calcSoilSensScore(soilLoss_bare, runoffDepth_bare, procGDB, MaskNoWater)
+   # --> Function outputs in procGDB are soilLoss_Score, runoff_Score, and soilSens_Score
+   soilLossScore = procGDB + os.sep + "soilLoss_Score"
+   runoffScore = procGDB + os.sep + "runoff_Score"
+   SoilSensScore = procGDB + os.sep + "soilSens_Score"
+   print("Building pyramids...")
+   for ras in [soilLossScore, runoffScore, SoilSensScore]:
+      arcpy.management.BuildPyramids(ras)
+   print("Soil score rasters complete.")
    
    
-   ### Overland Flow procedures ###
+   ## Overland Flow procedures ###
    print("Starting procedures for overland flow...")
    
-   ## Prepare the flow distance raster
+   # Prepare the flow distance raster
    FlowLength = procGDB + os.sep + "overlandFlowLength"
    #[David - insert function call(s) to produc FlowLength here, and function definition(s) in Wtrshd_Functions script]
    
@@ -183,6 +191,7 @@ def main():
    print("Creating headwaters raster...")
    Headwaters = procGDB + os.sep + "Hdwtrs"
    makeHdwtrsIndicator(FlowLines, Catchments, clpShp, MaskNoWater, Headwaters)
+   print("Building pyramids...")
    arcpy.management.BuildPyramids(Headwaters)
    print("Headwaters raster complete.")
    
@@ -190,22 +199,23 @@ def main():
    print("Creating score raster for overland flow...")
    FlowScore = procGDB + os.sep + "FlowScore"
    calcFlowScore(FlowLength, FlowScore, Headwaters)
+   print("Building pyramids...")
    arcpy.management.BuildPyramids(FlowScore)
    print("Flow score complete.")
    
    
    ### Karst procedures ###
    
-   # ## Prepare sinkholes
-   # # --> Manual operation required: Prior to running density scoring function, make sure the sinkhole data are "clean", i.e., no overlaps/duplicates. There must also be a field representing the sinkhole area in desired units (i.e., square meters).
+   ## Prepare sinkholes
+   # --> Manual operation required: Prior to running density scoring function, make sure the sinkhole data are "clean", i.e., no overlaps/duplicates. There must also be a field representing the sinkhole area in desired units (i.e., square meters).
    
-   # ## Calculate sinkhole density
-   # print("Calculating sinkhold density...")
-   # calcSinkDensity(in_SinkPolys, fld_Area, procMask, procGDB, searchRadius = 5000)
-   # print("Density calculation complete.")
-   # # --> Function outputs in procGDB are sinkPoints, sinkPoints_prj, and sinkDens
-   # sinkPoints = procGDB + os.sep + "sinkPoints"
-   # sinkPoints_prj = procGDB + os.sep + "sinkPoints_prj"
+   ## Calculate sinkhole density
+   print("Calculating sinkhold density...")
+   calcSinkDensity(in_SinkPolys, fld_Area, procMask, procGDB, searchRadius = 5000)
+   print("Density calculation complete.")
+   # --> Function outputs in procGDB are sinkPoints, sinkPoints_prj, and sinkDens
+   sinkPoints = procGDB + os.sep + "sinkPoints"
+   sinkPoints_prj = procGDB + os.sep + "sinkPoints_prj"
    sinkDens = procGDB + os.sep + "sinkDens"
    
    ## Calculate Karst Prevalence Score
@@ -217,6 +227,7 @@ def main():
    karst_distScore = procGDB + os.sep + "karst_distScore" 
    karst_densScore = procGDB + os.sep + "karst_densScore"
    KarstScore = procGDB + os.sep + "KarstScore" 
+   print("Building pyramids...")
    arcpy.management.BuildPyramids(KarstScore)
    print("Karst score complete.")
    
@@ -225,6 +236,7 @@ def main():
    print("Creating score raster for landscape position...")
    PositionScore = procGDB + os.sep + "PositionScore"
    calcPositionScore(FlowScore, KarstScore, PositionScore)
+   print("Building pyramids...")
    arcpy.management.BuildPyramids(PositionScore)
    print("Landscape position score complete.")
    
@@ -233,17 +245,18 @@ def main():
    print("Creating score raster for potential impact...")
    ImpactScore = procGDB + os.sep + "ImpactScore"
    calcImpactScore(PositionScore, SoilSensScore, ImpactScore)
+   print("Building pyramids...")
    arcpy.management.BuildPyramids(ImpactScore)
    print("Impact score complete.")
    
    
-   # ### Finalize TIF Products ###
-   # mask = jurisbnd
-   # outPath = r"N:\ProProjects\WatershedModels\CVWIM_Data\cvwimTIF"
-   # procList = [runoffScore, soilLossScore, soilSens_Score, FlowScore, KarstScore, PositionScore, ImpactScore]
+   ### Finalize TIF Products ###
+   mask = jurisbnd
+   outPath = r"N:\ProProjects\WatershedModels\CVWIM_Data\cvwimTIF"
+   procList = [runoffScore, soilLossScore, SoilSensScore, FlowScore, KarstScore, PositionScore, ImpactScore]
    
-   # for ras in procList:
-      # finalize_gdbRas2Tif(ras, mask, outPath)
+   for ras in procList:
+      finalize_gdbRas2Tif(ras, mask, outPath)
    
 if __name__ == "__main__":
    main()
