@@ -5,9 +5,7 @@
 # Last Edit: 2022-05-27
 # Creator: Kirsten R. Hazler
 #
-# Summary: Workflow to produce the ConservationVision Watershed Impact Model 
-
-# Usage notes: This is intended as a guide for how to reproduce the model, and you may or may not want to run all code at once. Prior to running, you need to download the latest data, perform some manual operations, and replace hard-coded data paths with your own. It's recommended to comment out sections as needed, and just run small sections at a time. 
+# SUMMARY: Workflow to produce the ConservationVision Watershed Impact Model 
 
 # For background and references see:
 # - Coastal Services Center. 2014. “Technical Guide for OpenNSPECT, Version 1.2.” National Oceanic and Atmospheric Administration (NOAA). https://coast.noaa.gov/digitalcoast/tools/opennspect
@@ -15,6 +13,8 @@
 # - Cronshey, R., R.H. McCuen, N. Miller, W. Rawls, S. Robbins, and D. Woodward. 1986. “Urban Hydrology for Small Watersheds (2nd Ed.).” Technical Release 55. Natural Resources Conservation Service, U.S. Department of Agriculture.
 
 # Also refer to methods in the associated technical report which can be found at https://www.dcr.virginia.gov/natural-heritage/vaconviswater
+
+# USAGE NOTES: This workflow is intended as a guide for how to reproduce the model, and you may or may not want to run all code at once. Prior to running, you need to download the latest data, perform some manual operations, and replace hard-coded data paths with your own. You may want to comment out sections and just run small blocks of code at a time, reviewing outputs prior to proceeding. 
 
 # ---------------------------------------------------------------------------
 # Import modules
