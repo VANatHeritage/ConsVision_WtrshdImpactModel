@@ -10,4 +10,4 @@ For more information, see [here](https://www.dcr.virginia.gov/natural-heritage/v
 
 **WtrshdImpact_Functions.py** - Contains functions specific to this model
 
-**WtrshdImpact_Workflow.py** - Contains data path specifications and series of function calls in the order needed to produce the model. Intended to be edited by the user with specific data paths as needed.
+**WtrshdImpact_Workflow.py** - Contains data path specifications and a series of function calls in the order needed to produce the model. Intended to be edited by the user with specific data paths as needed.
