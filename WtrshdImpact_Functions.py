@@ -634,6 +634,57 @@ def calcSoilSensScore(in_SoilLoss, in_Runoff, out_GDB, in_Mask = "NONE"):
 
 
 ### Functions for creating Overland Flow, Karst Prevalence, and Landscape Position Scores
+def calcFlowLength(nhdDir, huList, extent, out_GDB, out_RasterName):
+   """
+   Creates a mosaicked overland flow length raster from a collection of overland flow direction rasters
+   Args:
+      in_FdrOverlandRasters: List of input flow direction (fdroverland) rasters from NHDPlusHR
+      extent: Final extent for output raster
+      out_GDB: Output GDB. Intermediate outputs and final raster are saved here
+      out_RasterName: Final mosaicked flow length raster name (do not include path)
+   Returns:
+      Mosaicked flow length raster.
+
+   Pre-requisite:
+   Download NHDPlusHR raster dataset for HU4's needed for analysis, extract all to the `nhdDir` folder.
+
+   Notes:
+   This function uses hard-coded names for NHDPlusHR flow direction rasters (e.g. fdroverland.tif), which would need to
+   be updated in case of changes in NHDPlus datasets.
+
+   For the 2021 model version, a bug fix was applied to flow direction rasters for HU4s in hydro-region 02, where
+   excessive sinks were added during NHD processing. Fixed rasters were stored in 'hydrofix.gdb' geodatabases in
+   respective HU4 folders, which is reflected in this function (if that raster exists, it is used in place of the
+   base fdroverland raster). It is expected that this bug will be fixed in subsequent NHDPlusHR releases.
+   """
+   # Calculate flow length for all flow direction rasters
+   ls = []
+   for hu in huList:
+      fdrast = os.path.join(nhdDir, 'HRNHDPlusRasters' + hu, 'hydrofix.gdb', 'fdroverland_sinkfix')
+      if not arcpy.Exists(fdrast):
+         fdrast = os.path.join(nhdDir, 'HRNHDPlusRasters' + hu, 'fdroverland.tif')
+      if not arcpy.Exists(fdrast):
+         raise ValueError("Raster `" + fdrast + "` does not exist.")
+      t1 = time.time()
+      print('Calculating flow length for ' + fdrast + '...')
+      out = out_GDB + os.sep + 'flowlengover_' + hu
+      ls.append(out)
+      with arcpy.EnvManager(outputCoordinateSystem=fdrast, cellSize=fdrast, snapRaster=fdrast):
+         if not arcpy.Exists(out):
+            arcpy.sa.FlowLength(fdrast, "DOWNSTREAM").save(out)
+      t2 = time.time()
+      print('That took ' + str(round((t2 - t1) / 60)) + ' minutes.')
+   # Mosaic all flow length rasters
+   out = out_GDB + os.sep + out_RasterName
+   print("Mosaicking flow length rasters, this could take a while...")
+   with arcpy.EnvManager(outputCoordinateSystem=ls[0], cellSize=ls[0], snapRaster=ls[0], extent=extent):
+      arcpy.sa.CellStatistics(ls, "MAXIMUM", "DATA", "SINGLE_BAND").save(out)
+      arcpy.BuildPyramids_management(out)
+   t3 = time.time()
+   print('That took ' + str(round((t3 - t2) / 60)) + ' minutes.')
+   return out
+
+
 def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_Hdwtrs):
    '''Creates a "Headwaters Indicator" raster, representing presence in a headwater (1) or non-headwater (0) catchment. This is a component of the Landscape Position Score.
    

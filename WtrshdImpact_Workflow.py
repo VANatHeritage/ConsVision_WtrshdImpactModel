@@ -176,9 +176,23 @@ def main():
    print("Starting procedures for overland flow...")
    
    ## Prepare the flow distance raster
+   nhdDir = r'F:\David\GIS_data\NHDPlus_HR'
+   huList = ['0204', '0207', '0208', '0301', '0304', '0305', '0505', '0507', '0510', '0513', '0601']
    FlowLength = procGDB + os.sep + "overlandFlowLength"
-   #[David - insert function call(s) to produc FlowLength here, and function definition(s) in Wtrshd_Functions script]
-   
+
+   ####### for testing:
+   # out_GDB = r"D:\projects\nhd_network\test_overlandFlow.gdb"
+   # extent = r'F:\David\GIS_data\NHDPlus_HR\NHDPlus_HR_Virginia.gdb\WBDHU8_allFlowIntoVA'
+   # if not arcpy.Exists(out_GDB):
+   #    arcpy.CreateFileGDB_management(os.path.dirname(out_GDB), os.path.basename(out_GDB))
+   # out_RasterName = "overlandFlowLength"
+   ####### end testing
+
+   # NOTE: this function can take many hours to run, as it runs a Flow Length analysis for each hydrologic unit,
+   # and then mosaics the outputs.
+   calcFlowLength(nhdDir, huList, extent=clpShp, out_GDB=procGDB, out_RasterName=os.path.basename(FlowLength))
+   print("Flow length raster complete.")
+
    ## Prepare the headwaters raster
    print("Creating headwaters raster...")
    Headwaters = procGDB + os.sep + "Hdwtrs"
