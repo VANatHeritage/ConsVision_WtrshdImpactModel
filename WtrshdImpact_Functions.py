@@ -634,14 +634,16 @@ def calcSoilSensScore(in_SoilLoss, in_Runoff, out_GDB, in_Mask = "NONE"):
 
 
 ### Functions for creating Overland Flow, Karst Prevalence, and Landscape Position Scores
-def calcFlowLength(nhdDir, huList, extent, out_GDB, out_RasterName):
+def calcFlowLength(nhdDir, huList, extent, out_GDB, out_FlowLength):
    """
    Creates a mosaicked overland flow length raster from a collection of overland flow direction rasters
    Args:
-      in_FdrOverlandRasters: List of input flow direction (fdroverland) rasters from NHDPlusHR
+      nhdDir: Folder containing sub-folders with NHDPlusHR rasters
+      huList: List of hydrological units (by HU4 code) to process
       extent: Final extent for output raster
-      out_GDB: Output GDB. Intermediate outputs and final raster are saved here
-      out_RasterName: Final mosaicked flow length raster name (do not include path)
+      out_GDB: Geodatabase where intermediate outputs are saved (flow length for each HU4). If an intermediate raster
+         exists, processing is skipped for that raster.
+      out_FlowLength: Final mosaicked flow length raster
    Returns:
       Mosaicked flow length raster.
 
@@ -649,15 +651,14 @@ def calcFlowLength(nhdDir, huList, extent, out_GDB, out_RasterName):
    Download NHDPlusHR raster dataset for HU4's needed for analysis, extract all to the `nhdDir` folder.
 
    Notes:
-   This function uses hard-coded names for NHDPlusHR flow direction rasters (e.g. fdroverland.tif), which would need to
-   be updated in case of changes in NHDPlus datasets.
+   This function uses hard-coded names for NHDPlusHR raster directories and flow direction rasters
+   (e.g. fdroverland.tif), which would need to be updated in case of updates to NHDPlusHR raster datasets.
 
    For the 2021 model version, a bug fix was applied to flow direction rasters for HU4s in hydro-region 02, where
    excessive sinks were added during NHD processing. Fixed rasters were stored in 'hydrofix.gdb' geodatabases in
    respective HU4 folders, which is reflected in this function (if that raster exists, it is used in place of the
    base fdroverland raster). It is expected that this bug will be fixed in subsequent NHDPlusHR releases.
    """
-   # Calculate flow length for all flow direction rasters
    ls = []
    for hu in huList:
       fdrast = os.path.join(nhdDir, 'HRNHDPlusRasters' + hu, 'hydrofix.gdb', 'fdroverland_sinkfix')
@@ -672,17 +673,18 @@ def calcFlowLength(nhdDir, huList, extent, out_GDB, out_RasterName):
       with arcpy.EnvManager(outputCoordinateSystem=fdrast, cellSize=fdrast, snapRaster=fdrast):
          if not arcpy.Exists(out):
             arcpy.sa.FlowLength(fdrast, "DOWNSTREAM").save(out)
+         else:
+            print("`" + out + "` already exists, skipping...")
       t2 = time.time()
       print('That took ' + str(round((t2 - t1) / 60)) + ' minutes.')
    # Mosaic all flow length rasters
-   out = out_GDB + os.sep + out_RasterName
    print("Mosaicking flow length rasters, this could take a while...")
    with arcpy.EnvManager(outputCoordinateSystem=ls[0], cellSize=ls[0], snapRaster=ls[0], extent=extent):
-      arcpy.sa.CellStatistics(ls, "MAXIMUM", "DATA", "SINGLE_BAND").save(out)
-      arcpy.BuildPyramids_management(out)
+      arcpy.sa.CellStatistics(ls, "MAXIMUM", "DATA", "SINGLE_BAND").save(out_FlowLength)
+      arcpy.BuildPyramids_management(out_FlowLength)
    t3 = time.time()
    print('That took ' + str(round((t3 - t2) / 60)) + ' minutes.')
-   return out
+   return out_FlowLength
 
 
 def makeHdwtrsIndicator(in_FlowLines, in_Catchments, in_BoundPoly, in_Mask, out_Hdwtrs):

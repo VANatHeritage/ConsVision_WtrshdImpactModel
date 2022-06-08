@@ -63,7 +63,9 @@ def main():
    NHDPlus_path = r"N:\SpatialData\NHD_Plus\HydroNet\VA_HydroNetHR"
    FlowLines = NHDPlus_path + os.sep + r"VA_HydroNetHR.gdb\HydroNet\NHDFlowline"
    Catchments = NHDPlus_path + os.sep + r"VA_HydroNetHR.gdb\NHDPlusCatchment"
-   
+   NHDPlus_rastPath = r'F:\David\GIS_data\NHDPlus_HR'
+   HUC4List = ['0204', '0207', '0208', '0301', '0304', '0305', '0505', '0507', '0510', '0513', '0601']
+
    # Other inputs
    in_Elev = r"N:\SpatialData\3DEP\Elev_cm.gdb\elev_cm_VA" # derived from 3DEP data
    in_Rfactor = r"N:\ProProjects\WatershedModels\CVWIM_Data\R_Factor\R-Factor_CONUS.tif" # downloaded from https://coast.noaa.gov/data/digitalcoast/zip/R-Factor-CONUS.zip
@@ -186,12 +188,10 @@ def main():
    print("Starting procedures for overland flow...")
 
    ## Prepare the flow length raster
-   nhdDir = r'F:\David\GIS_data\NHDPlus_HR'
-   huList = ['0204', '0207', '0208', '0301', '0304', '0305', '0505', '0507', '0510', '0513', '0601']
    FlowLength = procGDB + os.sep + "overlandFlowLength"
    # NOTE: this function can take many hours to run, as it runs a Flow Length analysis for each hydrologic unit,
    # and then mosaics the outputs.
-   calcFlowLength(nhdDir, huList, extent=clpShp, out_GDB=procGDB, out_RasterName=os.path.basename(FlowLength))
+   calcFlowLength(NHDPlus_rastPath, HUC4List, extent=clpShp, out_GDB=procGDB, out_FlowLength=FlowLength)
    print("Flow length raster complete.")
 
    ## Prepare the headwaters raster
