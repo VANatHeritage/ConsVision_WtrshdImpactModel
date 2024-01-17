@@ -300,7 +300,7 @@ def SlopeTrans(in_Raster, inputType, transType, out_Trans, out_Slope, zfactor = 
       in_Slope = Slope(in_Raster, "PERCENT_RISE", zfactor) 
       in_Slope.save(out_Slope)
    else:   
-      in_Slope = Raster(in_Slope)
+      in_Slope = Raster(in_Raster)
    
    if transType == "TRUNCLIN":
    # Set flat and nearly level slopes (LTE 1 degree) to 0. Set extreme slopes (GTE 30 degrees) to 100. Use linear function to scale between those values.
@@ -318,12 +318,15 @@ def SlopeTrans(in_Raster, inputType, transType, out_Trans, out_Slope, zfactor = 
    elif transType == "TRUNCSIN":
    # Take the sine, multiply by 200, and integerize. Upper values are truncated at 100 (which happens at 30 degrees).
       if slopeType == "PERCENT":
+         # fixme: Use of Min in these statements was incorrect. Fixed below with intermediate raster procSlope, and Con statement for truncation.
          print("Converting percent grade to radians and calculating score...")
-         outRaster = Min(100, Int(0.5 + 200*Sin(ATan(in_Slope/100))))
+         # outRaster = Min(100, Int(0.5 + 200*Sin(ATan(in_Slope/100))))
+         procSlope = Int(0.5 + 200*Sin(ATan(in_Slope/100)))
       else: 
          print("Converting degrees to radians and calculating score...")
-         outRaster = Min(100, Int(0.5 + 200*Sin(in_Slope * math.pi/180.0)))
-         
+         # outRaster = Min(100, Int(0.5 + 200*Sin(in_Slope * math.pi/180.0)))
+         procSlope = Int(0.5 + 200*Sin(in_Slope * math.pi/180.0))
+      outRaster = Con(procSlope, 100, procSlope, "VALUE > 100")
    else:
    # Use RUSLE transformation equations
       inflect = 9.0
@@ -636,19 +639,21 @@ def calcSoilSensScore(in_SoilLoss, in_Runoff, out_GDB, in_Mask = "NONE"):
 ### Functions for creating Overland Flow, Karst Prevalence, and Landscape Position Scores
 def calcFlowLength(nhdDir, huList, extent, out_GDB, out_FlowLength):
    """
-   Creates a mosaicked overland flow length raster from a collection of overland flow direction rasters
-   Args:
-      nhdDir: Folder containing sub-folders with NHDPlusHR rasters
-      huList: List of hydrological units (by HU4 code) to process
-      extent: Final extent for output raster
-      out_GDB: Geodatabase where intermediate outputs are saved (flow length for each HU4). If an intermediate raster
-         exists, processing is skipped for that raster.
-      out_FlowLength: Final mosaicked flow length raster
+   Creates a mosaicked overland flow length raster from a collection of overland flow direction rasters from NHDPlusHR
+
+   Parameters:
+   - nhdDir: Folder containing sub-folders with NHDPlusHR rasters
+   - huList: List of hydrological units (by HU4 code) to process
+   - extent: Final extent for output raster
+   - out_GDB: Geodatabase where intermediate outputs are saved (flow length for each HU4). If an intermediate raster
+      exists, processing is skipped for that raster.
+   - out_FlowLength: Final mosaicked flow length raster
    Returns:
       Mosaicked flow length raster.
 
    Pre-requisite:
-   Download NHDPlusHR raster dataset for HU4's needed for analysis, extract all to the `nhdDir` folder.
+   Download NHDPlusHR raster dataset for HU4's needed for analysis, so that individual HU4
+   folders are in the `nhdDir` folder.
 
    Notes:
    This function uses hard-coded names for NHDPlusHR raster directories and flow direction rasters
@@ -657,7 +662,7 @@ def calcFlowLength(nhdDir, huList, extent, out_GDB, out_FlowLength):
    For the 2021 model version, a bug fix was applied to flow direction rasters for HU4s in hydro-region 02, where
    excessive sinks were added during NHD processing. Fixed rasters were stored in 'hydrofix.gdb' geodatabases in
    respective HU4 folders, which is reflected in this function (if that raster exists, it is used in place of the
-   base fdroverland raster). It is expected that this bug will be fixed in subsequent NHDPlusHR releases.
+   base fdroverland.tif raster). It is expected that this bug will be fixed in subsequent NHDPlusHR releases.
    """
    ls = []
    for hu in huList:
@@ -677,7 +682,7 @@ def calcFlowLength(nhdDir, huList, extent, out_GDB, out_FlowLength):
             print("`" + out + "` already exists, skipping...")
       t2 = time.time()
       print('That took ' + str(round((t2 - t1) / 60)) + ' minutes.')
-   # Mosaic all flow length rasters
+
    print("Mosaicking flow length rasters, this could take a while...")
    with arcpy.EnvManager(outputCoordinateSystem=ls[0], cellSize=ls[0], snapRaster=ls[0], extent=extent):
       arcpy.sa.CellStatistics(ls, "MAXIMUM", "DATA", "SINGLE_BAND").save(out_FlowLength)

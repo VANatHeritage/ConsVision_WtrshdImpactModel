@@ -70,6 +70,7 @@ def main():
    in_Elev = r"N:\SpatialData\3DEP\Elev_cm.gdb\elev_cm_VA" # derived from 3DEP data
    in_Rfactor = r"N:\ProProjects\WatershedModels\CVWIM_Data\R_Factor\R-Factor_CONUS.tif" # downloaded from https://coast.noaa.gov/data/digitalcoast/zip/R-Factor-CONUS.zip
    KarstPolys = r"Y:\SpatialData\USGS\USKarstMap\USKarstMap.gdb\Contiguous48\Carbonates48" # downloaded from https://pubs.usgs.gov/of/2014/1156/
+   # fixme: object name in calcSinkDensity call is 'in_SinkPolys'. Also missing `fld_Area` definition.
    SinkPolys = r"Y:\SpatialData\DMME\Sinkholes_VaDMME_2020SeptCurrent\Sinkholes_VaDMME.shp" # obtained by request from DMME
 
    ### End Input Data ###
@@ -217,7 +218,7 @@ def main():
    # --> Manual operation required: Prior to running density scoring function, make sure the sinkhole data are "clean", i.e., no overlaps/duplicates. There must also be a field representing the sinkhole area in desired units (i.e., square meters).
    
    ## Calculate sinkhole density
-   print("Calculating sinkhold density...")
+   print("Calculating sinkhole density...")
    calcSinkDensity(in_SinkPolys, fld_Area, procMask, procGDB, searchRadius = 5000)
    print("Density calculation complete.")
    # --> Function outputs in procGDB are sinkPoints, sinkPoints_prj, and sinkDens
